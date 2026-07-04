@@ -27,6 +27,7 @@ pub fn fnv1aExclude(data: []const u8, exc_off: usize, exc_len: usize) u32 {
 
 // CRC32 table
 const crc32_table = blk: {
+    @setEvalBranchQuota(5000);
     var table: [256]u32 = undefined;
     for (0..256) |i| {
         var c: u32 = @intCast(i);

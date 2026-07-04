@@ -1,3 +1,3 @@
 #!/bin/bash
-cd $SRC
+cd "$SRC"
 bash build.sh

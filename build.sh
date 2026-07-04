@@ -1,7 +1,4 @@
 #!/bin/bash
-# build.sh - Build fuzzer targets for ClusterFuzzLite
-# Uses zig to compile the library, then links with the fuzzing engine.
-
 set -e
 
 SRC=${SRC:-$(dirname "$0")}
@@ -14,9 +11,17 @@ LIB_FUZZING_ENGINE=${LIB_FUZZING_ENGINE:--fsanitize=fuzzer}
 
 cd "$SRC"
 
-# Build the Zig library as a static archive
-zig build-lib -Mroot=src/root.zig -lc -OReleaseFast -femit-bin=libgamut
-mv libgamut libgamut.a
+# Ensure zig is available
+if ! command -v zig &>/dev/null; then
+    pip install ziglang --break-system-packages 2>/dev/null || pip install ziglang
+fi
+
+# Build the Zig library
+zig build-lib -Mroot=src/root.zig -lc -OReleaseFast -femit-bin=libgamut.o
+mv libgamut.o libgamut.a 2>/dev/null || true
+
+# Compile __zig_probe_stack stub
+$CC $CFLAGS -c zig_rt_stub.c -o zig_rt_stub.o
 
 # Build each fuzzer harness
 for fuzzer in parse_fuzzer query_fuzzer resolve_fuzzer; do
@@ -24,14 +29,15 @@ for fuzzer in parse_fuzzer query_fuzzer resolve_fuzzer; do
         $LIB_FUZZING_ENGINE \
         -o "$OUT/$fuzzer" \
         "fuzz/${fuzzer}.cc" \
-        libgamut.a -lm
+        libgamut.a zig_rt_stub.o -lm
 done
 
 # Copy seed corpus
 for fuzzer in parse_fuzzer query_fuzzer resolve_fuzzer; do
     if [ -d "fuzz/corpus/${fuzzer}" ]; then
-        cp -r "fuzz/corpus/${fuzzer}" "$OUT/${fuzzer}_corpus" 2>/dev/null || true
+        mkdir -p "$OUT/${fuzzer}_corpus"
+        cp fuzz/corpus/${fuzzer}/* "$OUT/${fuzzer}_corpus/" 2>/dev/null || true
     fi
 done
 
-rm -f libgamut.a
+rm -f libgamut.a zig_rt_stub.o
