@@ -124,7 +124,7 @@ pub fn pqEotf(n: f32) f32 {
     if (np < 0) np = 0;
     var num = np - c1;
     if (num < 0) num = 0;
-    var den = c2 - c3 * np;
+    const den = c2 - c3 * np;
     if (den <= 0) return 0;
     return 10000.0 * approxPow(num / den, 1.0 / m1);
 }

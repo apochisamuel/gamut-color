@@ -21,12 +21,10 @@ fn sampleAt(samples: [*]f32, count: u32, x: f32) f32 {
 
 fn applyCurveStage(s: *const types.LinkStage, v: []f32) void {
     const ch = s.in_ch;
-    // BUG 1: reads samples pointer that may have been freed by validate
     v[ch] = sampleAt(s.curve_samples.?, s.curve_count, v[ch]);
 }
 
 fn applyChadStage(s: *const types.LinkStage, v: []f32) void {
-    // BUG 5: reads white pointer that may have been freed by checksum repair
     const wx = s.white.?.x;
     const wy = s.white.?.y;
     const wz = s.white.?.z;
@@ -36,7 +34,6 @@ fn applyChadStage(s: *const types.LinkStage, v: []f32) void {
 }
 
 fn applyMatrixStage(s: *const types.LinkStage, v: []f32) void {
-    // BUG 6: reads matrix pointer that may have been freed by validate
     const m = s.matrix.?;
     const r = m.e[0] * v[0] + m.e[1] * v[1] + m.e[2] * v[2] + m.off[0];
     const g = m.e[3] * v[0] + m.e[4] * v[1] + m.e[5] * v[2] + m.off[1];
@@ -55,7 +52,6 @@ pub fn apply(p: *const types.Profile, lc: *const types.LinkCache, input: []const
         work[d] = input[d];
     }
 
-    // BUG 3: order[i] may point to a stages[] entry that was reallocated
     var i: usize = 0;
     while (i < lc.order_count) : (i += 1) {
         const s = lc.order.?[i] orelse continue;

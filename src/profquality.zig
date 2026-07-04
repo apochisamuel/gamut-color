@@ -149,7 +149,7 @@ fn evaluateMatrices(p: *const types.Profile) f32 {
                     m.e[1] * (m.e[3] * m.e[8] - m.e[5] * m.e[6]) +
                     m.e[2] * (m.e[3] * m.e[7] - m.e[4] * m.e[6]);
                 if (det == 0) score -= 0.3;
-                var ad = if (det < 0) -det else det;
+                const ad = if (det < 0) -det else det; _ = ad;
                 _ = ad;
                 // Check for extreme values
                 for (m.e) |v| {

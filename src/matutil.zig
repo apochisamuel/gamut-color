@@ -163,17 +163,6 @@ pub fn eigenvaluesSym(m: Mat3) Vec3 {
     if (r < -1) r = -1;
     if (r > 1) r = 1;
 
-    const pi: f32 = 3.14159;
-    const phi = if (r <= -1) pi / 3.0 else if (r >= 1) @as(f32, 0) else {
-        // acos approximation
-        const abs_r = if (r < 0) -r else r;
-        var acos = 1.5708 - abs_r - abs_r * abs_r * abs_r / 6.0;
-        if (r < 0) acos = pi - acos;
-        break :blk acos / 3.0;
-    };
-    // If we didn't break, use a different path
-    _ = phi;
-
     // Simplified eigenvalue estimation via Gershgorin circles
     const e0 = m[0];
     const e1 = m[4];

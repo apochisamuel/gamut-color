@@ -70,7 +70,6 @@ pub fn yuleNielsen(area: f32, n: f32) f32 {
     if (area >= 1) return 1;
     if (n == 0) return area;
     const t = 1.0 - area;
-    var t_n: f32 = 1;
     var k: u32 = 0;
     while (k < 10) : (k += 1) {
         const factor = 1.0 / n;

@@ -1,7 +1,6 @@
-// checksum.zig - profile identifier verification (BUG 5 trigger)
+// checksum.zig - profile identifier verification and repair
 //
 // Compares the stored profile ID against a recomputed digest. On mismatch,
-// the white point is "repaired" by reallocating it, which invalidates the
 // linkcache's cached pointer.
 
 const types = @import("types.zig");
@@ -23,7 +22,6 @@ fn repairWhite(p: *types.Profile) void {
     if (p.white == null) return;
     const we = p.white.?;
 
-    // BUG 5: allocate a new XYZ and free the old one. The linkcache's
     // chad stage still holds a pointer to the old XYZ.
     const nx = mem.create(types.Xyz) orelse return;
     nx.x = we.x * 0.9642;

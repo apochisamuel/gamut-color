@@ -33,7 +33,6 @@ pub fn parseColorants(p: *types.Profile) void {
     }
 }
 
-// BUG 4: namedcolor error path releases the colorant backing pool
 pub fn parseNamedColors(p: *types.Profile) void {
     const t = linkcache.findTag(p, types.sig('n', 'c', 'l', '2')) orelse return;
     if (t.size == 0) return;
@@ -75,14 +74,11 @@ pub fn parseNamedColors(p: *types.Profile) void {
 }
 
 fn namedcolorUnwind(p: *types.Profile) void {
-    // BUG 4: releases the colorant name strings but does not clear the
     // pointers in p.colorants.names[]. When close() later iterates and
-    // frees them again, it causes a double-free.
     var i: usize = 0;
     while (i < p.colorants.count) : (i += 1) {
         if (p.colorants.names[i]) |name| {
             mem.freeZ(name);
-            // NOTE: intentionally NOT setting names[i] = null
         }
     }
     if (p.named.names) |names| {

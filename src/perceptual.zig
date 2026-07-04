@@ -89,7 +89,7 @@ fn hueComposition(h: f32, quad: *[4]f32) void {
 
     for (0..4) |i| {
         const j = (i + 1) % 4;
-        var hi = uh[i];
+        const hi = uh[i];
         var hj = uh[j];
         if (j == 0) hj += 360;
         if (hi > hj) continue;

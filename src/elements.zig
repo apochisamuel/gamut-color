@@ -150,9 +150,7 @@ fn freeElement(el: *types.Element) void {
         .lut => mem.freeFn(types.Lut, el.data.lut),
         .mpet => {
             const mp = el.data.mpet;
-            // BUG 7: if collapsed, fold_owned may point to an already-freed
             // pool element. The mpet_free attempts to release it, causing a
-            // double-free when the pool also releases the same element.
             if (mp.collapsed and mp.fold_owned != null) {
                 const fe = mp.fold_owned.?;
                 if (fe.kind == .clut) {

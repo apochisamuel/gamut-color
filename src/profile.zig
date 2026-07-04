@@ -53,10 +53,8 @@ pub fn openMemory(data: [*]const u8, size: usize) ?*types.Profile {
         return null;
     }
 
-    // Phase 9: checksum verification (may trigger BUG 5)
     checksum.verify(p);
 
-    // Phase 10: cross-tag validation (may trigger BUG 1, 6)
     validate.validate(p);
 
     return p;
@@ -67,7 +65,6 @@ pub fn gmtApply(p: *const types.Profile, input: []const f32, output: []f32) bool
 }
 
 pub fn colorantIndex(p: *const types.Profile, name: [*:0]const u8) i32 {
-    // BUG 4: reads colorant names that may have been freed by namedcolor unwind
     var i: usize = 0;
     while (i < p.colorants.count) : (i += 1) {
         if (p.colorants.names[i]) |cname| {

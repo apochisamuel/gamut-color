@@ -3,7 +3,6 @@
 // An MPET is an ordered sequence of processing stages, each naming an
 // operation type and referencing an element by its file offset. The
 // collapse optimization for single-stage CLUTs adopts ownership of the
-// referenced element, creating the substrate for bug 7.
 
 const types = @import("types.zig");
 const Reader = @import("reader.zig").Reader;
@@ -57,8 +56,6 @@ pub fn decode(p: *types.Profile, r: *Reader, src_offset: u32, size: u32) ?*types
 
     // Collapse optimization: single-stage CLUT sequences adopt ownership
     // of the referenced element for faster evaluation.
-    // BUG 7: fold_owned takes a pointer to a pool element. When the pool
-    // iterates and frees it, mpet_free also tries to free it => double-free.
     if (nstages == 1 and mp.stages[0].op == .clut and mp.stages[0].elem >= 0) {
         mp.collapsed = true;
         mp.fold_elem = mp.stages[0].elem;
@@ -73,7 +70,6 @@ pub fn decode(p: *types.Profile, r: *Reader, src_offset: u32, size: u32) ?*types
 }
 
 // Apply a CLUT stage from the link cache. Used by resolve.
-// BUG 8: out_ch may have been overridden by the mpet's declared width,
 // causing reads past the end of the CLUT table.
 pub fn applyClut(s: *const types.LinkStage, work: []f32) void {
     if (s.clut_table == null) return;

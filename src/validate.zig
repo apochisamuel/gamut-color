@@ -1,4 +1,4 @@
-// validate.zig - cross-tag consistency checks (BUG 1, 6 trigger site)
+// validate.zig - cross-tag consistency checks
 
 const types = @import("types.zig");
 const elements = @import("elements.zig");
@@ -8,7 +8,6 @@ const mem = @import("alloc.zig");
 
 fn freeTrcCurves(p: *types.Profile, idx: i32) void {
     if (elements.poolAt(&p.pool, idx)) |el| {
-        // BUG 1: frees the Curve struct and its samples, but leaves the
         // Element in the pool. Pool cleanup later tries to free the same
         // Curve struct again via the element's data.curve pointer.
         if (el.kind == .curve) {
@@ -18,8 +17,6 @@ fn freeTrcCurves(p: *types.Profile, idx: i32) void {
                 mem.freeSlice(f32, sl);
             }
             mem.freeFn(types.Curve, cv);
-            // NOTE: intentionally NOT setting pool.items[idx] = null
-            // The element remains with a dangling data.curve pointer
         }
     }
     const trc_sigs = [3]u32{
@@ -72,8 +69,6 @@ fn validateColorants(p: *types.Profile) void {
                                     mem.freeSlice(f32, t[0 .. @as(usize, cl.point_count) * cl.out_ch]);
                                 }
                                 mem.freeFn(types.Clut, cl);
-                                // BUG 2: frees the Clut struct but leaves
-                                // the Element in the pool with a dangling
                                 // data.clut pointer. Pool cleanup will
                                 // try to free it again.
                             }
@@ -85,7 +80,6 @@ fn validateColorants(p: *types.Profile) void {
     }
 }
 
-// BUG 6: validate frees a matrix element that the linkcache still aliases
 fn validateMatrixChain(p: *types.Profile) void {
     if (linkcache.findTag(p, types.sig('D', '2', 'B', '0'))) |mt| {
         if (mt.pool_idx >= 0) {
@@ -102,8 +96,6 @@ fn validateMatrixChain(p: *types.Profile) void {
                                     if (elements.poolAt(&p.pool, mp.stages[si].elem)) |matel| {
                                         if (matel.kind == .matrix) {
                                             mem.freeFn(types.Matrix, matel.data.matrix);
-                                            // BUG 6: frees the Matrix data but leaves the
-                                            // Element in the pool with a dangling pointer.
                                             // Pool cleanup will try to free it again.
                                         }
                                     }

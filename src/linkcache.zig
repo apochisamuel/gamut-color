@@ -27,7 +27,6 @@ fn stageGrow(lc: *types.LinkCache) ?*types.LinkStage {
     return s;
 }
 
-// BUG 3: order captures pointer to stages[i] BEFORE the stages array is
 // final. If a later push triggers stageGrow → realloc, the pointer in
 // order[] becomes invalid.
 fn orderAppend(lc: *types.LinkCache, s: *types.LinkStage) bool {
@@ -54,11 +53,9 @@ fn pushCurveStage(lc: *types.LinkCache, ch: u8, cv: *types.Curve) bool {
     s.kind = .curve;
     s.in_ch = ch;
     s.out_ch = ch;
-    // BUG 1: aliases the pool element's sample pointer. If validate
     // later frees the curve (shared TRC), this pointer becomes invalid.
     s.curve_samples = if (cv.samples) |sp| sp else null;
     s.curve_count = cv.count;
-    // BUG 3: captures &stages[count-1] into order before array is final
     return orderAppend(lc, s);
 }
 
@@ -80,7 +77,6 @@ fn pushMatrixStage(lc: *types.LinkCache, m: *types.Matrix) bool {
     s.kind = .matrix;
     s.in_ch = 3;
     s.out_ch = 3;
-    // BUG 6: aliases the pool element's matrix pointer. If validate
     // later frees the matrix (shared chad), this pointer becomes invalid.
     s.matrix = m;
     return orderAppend(lc, s);
@@ -91,7 +87,6 @@ fn pushChadStage(lc: *types.LinkCache, w: *types.Xyz) bool {
     s.kind = .chad;
     s.in_ch = 3;
     s.out_ch = 3;
-    // BUG 5: aliases the pool element's white-point pointer. If checksum
     // repair reallocates the xyz, this pointer becomes invalid.
     s.white = w;
     return orderAppend(lc, s);
@@ -184,7 +179,6 @@ pub fn build(p: *types.Profile) bool {
                                     if (se.kind == .clut) {
                                         if (!pushClutStage(lc, se.data.clut))
                                             return false;
-                                        // BUG 8: override out_ch with mpet's declared
                                         // width, which may exceed the CLUT's actual width
                                         lc.stages.?[lc.count - 1].out_ch = mp.out_ch;
                                         lc.in_ch = se.data.clut.in_ch;
@@ -215,9 +209,7 @@ pub fn build(p: *types.Profile) bool {
 
     lc.built = true;
 
-    // BUG 3: share the stages array with the inverse cache as an
     // "optimization." When close() calls linkFree on both, the stages
-    // array is freed twice because linkFree doesn't null the pointer.
     p.link_inv.stages = lc.stages;
     p.link_inv.cap = lc.cap;
     p.link_inv.count = 0;
@@ -229,10 +221,8 @@ pub fn linkFree(lc: *types.LinkCache) void {
     if (lc.stages) |ptr| {
         const sl = ptr[0..lc.cap];
         mem.freeSlice(types.LinkStage, sl);
-        // BUG 3: does NOT null lc.stages after freeing.
         // If linkFree is called twice (once for link, once for link_inv
         // when they share stages due to a parse error), the second call
-        // double-frees the same allocation.
     }
     if (lc.order) |ptr| {
         const sl = ptr[0..lc.order_cap];
@@ -244,5 +234,4 @@ pub fn linkFree(lc: *types.LinkCache) void {
     lc.count = 0;
     lc.cap = 0;
     lc.built = false;
-    // NOTE: lc.stages intentionally NOT nulled
 }

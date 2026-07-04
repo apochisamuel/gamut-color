@@ -101,7 +101,7 @@ fn isInsideGamut(boundary: []const f32, num_boundary: usize, l: f32, a: f32, b: 
     // Find closest boundary point
     var min_dist: f32 = 1e30;
     var closest_c: f32 = 0;
-    var query_c = approxSqrt(a * a + b * b);
+    const query_c = approxSqrt(a * a + b * b);
 
     var i: usize = 0;
     while (i < num_boundary) : (i += 1) {
